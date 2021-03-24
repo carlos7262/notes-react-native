@@ -2,11 +2,11 @@ import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler'
 
-export default function ListOfNotes({ notesLocal }) {
+export default function ListOfNotes({ notesLocal, setcurrentId }) {
     const renderNotes = ({ item }) =>
-        <TouchableOpacity style={styles.card}>
-            <Text>
-                {item.title}
+        <TouchableOpacity onPress={() => setcurrentId(item.id)} style={styles.card}>
+            <Text style={styles.noteText}>
+                {item.note}
             </Text>
         </TouchableOpacity>
 
@@ -14,6 +14,8 @@ export default function ListOfNotes({ notesLocal }) {
     return (
         <View style={styles.content}>
             {notesLocal !== null && notesLocal.length > 0 && <FlatList
+                showsVerticalScrollIndicator={false}
+                keyExtractor={(item) => item.id}
                 data={notesLocal}
                 renderItem={renderNotes}
             />}
@@ -24,13 +26,16 @@ export default function ListOfNotes({ notesLocal }) {
 
 const styles = StyleSheet.create({
     content: {
-        marginTop: 30,
-        height: '70%',
+        height: '100%',
+        marginTop: 20
     },
     card: {
         marginBottom: 20,
         padding: 15,
-        borderRadius: 10,
-        backgroundColor: '#D2D0D1'
+        borderRadius: 5,
+        backgroundColor: 'rgb(230, 230, 230)'
+    },
+    noteText: {
+        color: '#000'
     }
 })
