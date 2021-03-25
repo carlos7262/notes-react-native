@@ -1,14 +1,15 @@
 import React from 'react';
 
 import { createStackNavigator } from "@react-navigation/stack"
+import { fixtimerbug } from './fixtimerbug';
 
 const Stack = createStackNavigator()
-
 //Screens
 import Home from './screens/Home'
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 
+fixtimerbug()
 export const MyStackNavigation = () =>
   <Stack.Navigator
     screenOptions={{

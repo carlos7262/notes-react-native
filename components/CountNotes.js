@@ -2,12 +2,12 @@ import React from 'react'
 import { StyleSheet } from 'react-native'
 import { View, Text } from 'react-native'
 
-export default function CountNotes({ notesLocal }) {
+export default function CountNotes({ notes }) {
     return (
         <View style={styles.container}>
             <View style={styles.round}>
                 <Text style={styles.text}>
-                    {notesLocal !== null ? notesLocal.length : 0}
+                    {notes !== null ? notes.length : 0}
 
                 </Text>
             </View>

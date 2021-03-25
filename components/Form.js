@@ -3,7 +3,10 @@ import { StyleSheet, Text, View } from 'react-native'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import { Icon } from 'react-native-elements'
 import { Alert } from 'react-native'
-export default function Form({ setnotes, currentId, notes, setcurrentId }) {
+
+//firebase
+import { db } from '../firebaseConfig'
+export default function Form({ currentId, setcurrentId, notes }) {
 
     const initialState = {
         note: ''
@@ -14,93 +17,37 @@ export default function Form({ setnotes, currentId, notes, setcurrentId }) {
 
     const limitLengthNote = 50
 
-    const updateNote = () => {
-        var contador = 0
-        var updateNote = notes
-        updateNote.length > 0 && updateNote.map(({ id }) => {
-            if (currentId === id) {
-                updateNote[contador].note = inputValue.note
+
+    const saveNote = async () => {
+
+        if (inputValue.note !== '' && inputValue.note.length <= limitLengthNote) {
+            try {
+                await db.collection("notes").add(inputValue);
+            } catch (error) {
+                console.log(error)
             }
-            contador++
-        })
-        setnotes([...updateNote])
 
-        setcurrentId(0)
-    }
-
-    const proccesRemoveByIDNote = () => {
-        var contador = 0
-        var removeNote = notes
-        removeNote.map(({ id }) => {
-            if (currentId == id) {
-                removeNote.splice(contador, 1);
-            }
-            contador++;
-        });
-        setnotes([...removeNote])
-        setcurrentId(0)
-    }
-
-    const removeNoteById = () => {
-        Alert.alert(
-            "Eliminar Nota",
-            `¿Estas seguro de eliminar la nota "${inputValue.note}" `,
-            [
-                { text: "Claro :)", onPress: () => proccesRemoveByIDNote() },
-                { text: "No" },
-            ]
-        )
-    }
-
-    const removeAllNotes = () => {
-        notes.length > 0 && Alert.alert(
-            "Eliminar todas las notas",
-            "¿Estas seguro de eliminar todas las notas?",
-            [
-                { text: "Claro :)", onPress: () => setnotes([]) },
-                { text: "No" },
-            ]
-        )
-    }
-
-    const removeNote = () =>
-        currentId !== 0 ? removeNoteById() : removeAllNotes()
-
-
-    const createNote = () => {
-        var notevalue = inputValue.note.trim()
-        notevalue !== '' && notevalue.length <= limitLengthNote && setnotes(notes => [{ ...inputValue, id: generateUUID() }, ...notes])
-        setinputEditable(true)
+        }
         setinputValue(initialState)
+        setinputEditable(true)
+
     }
+
+    const updateNote = async () => {
+        const notesRef = db.collection("notes").doc(currentId);
+        await notesRef.set(inputValue)
+        setinputValue(initialState)
+        setcurrentId(0)
+    }
+
 
     const saveStateNotes = () =>
-        currentId !== 0 ? updateNote() : createNote()
+        currentId !== 0 ? updateNote() : saveNote()
 
-
-    useEffect(() => {
-        const noteSelect = notes.find(n => n.id === currentId)
-        const validateNote = noteSelect !== undefined ? noteSelect : initialState
-        setinputValue(validateNote)
-
-
-    }, [currentId])
-
-    const generateUUID = () => {
-        var d = new Date().getTime()
-        var uuid = 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, c => {
-            var r = (d + Math.random() * 16) % 16 | 0;
-            d = Math.floor(d / 16);
-            return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-        })
-        return uuid
-    }
-
+    //Valor de cambio para el input
     const onChangeValueText = (value, name) => {
         if (value.length >= limitLengthNote) {
             setinputEditable(false)
-
-
         }
         else {
             setinputValue({ ...inputValue, [name]: value })
@@ -108,6 +55,62 @@ export default function Form({ setnotes, currentId, notes, setcurrentId }) {
         }
 
     }
+
+    /* Verificando el id actual para cambiar estado del formulario */
+    //Editando
+    const getNoteById = async (id) => {
+        const dbRef = db.collection("notes").doc(id);
+        const doc = await dbRef.get();
+        const note = doc.data();
+        return { ...note, id: doc.id }
+    }
+    useEffect(() => {
+        currentId !== 0 && getNoteById(currentId)
+            .then(({ note }) => setinputValue({ note }))
+    }, [currentId])
+
+    //Eliminando
+    const removeNote = () =>
+        currentId !== 0 ? removeNoteById(currentId) : checkRemoveAllNotes()
+
+    const checkRemoveAllNotes = () => {
+        notes.length > 0 && Alert.alert(
+            "Eliminar todas las notas",
+            "¿Estas seguro de eliminar todas las notas?",
+            [
+                { text: "Claro :)", onPress: () => removeAllNotes() },
+                { text: "No" },
+            ]
+        )
+    }
+
+    const removeAllNotes = () => {
+        notes.forEach(n => {
+            proccesRemoveByIDNote(n.id)
+        });
+
+    }
+
+    const proccesRemoveByIDNote = async (id) => {
+        const dbRef = db
+            .collection("notes")
+            .doc(id);
+        await dbRef.delete();
+        setinputValue(initialState)
+        setcurrentId(0)
+    }
+
+    const removeNoteById = (id) => {
+        Alert.alert(
+            "Eliminar Nota",
+            `¿Estas seguro de eliminar la nota "${inputValue.note}" `,
+            [
+                { text: "Claro :)", onPress: () => proccesRemoveByIDNote(id) },
+                { text: "No" },
+            ]
+        )
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.contentRow}>
